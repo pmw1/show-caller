@@ -1,0 +1,161 @@
+CANONICAL PROJECT PLAN - LIFTOVER CALL QUEUE
+============================================
+
+THIS DOCUMENT SUPERSEDES ALL OTHER DOCUMENTATION
+-------------------------------------------------
+Any conflicting information in README.md, CURRENT_STATUS.md, DEPLOY.md, 
+or existing code should be ignored in favor of this plan.
+
+PROJECT VISION
+--------------
+Liftover Call Queue is a web-based caller management system for vMix calling shows.
+Replaces vMix's one-URL-per-call limitation with intelligent queuing and screening.
+
+ORIGINAL REQUIREMENTS FROM JOSH
+--------------------------------
+"I'm using vMix to do a calling show, but the vMix video caller function is one URL per call. 
+That's not the best way to handle a call-in show. What we really need is a way that callers 
+can dial in, be screened, and sit in a queue waiting to talk to Josh."
+
+TWO INBOUND PATHS REQUIRED:
+
+1. VIDEO PATH:
+   - Queue up video callers
+   - Two standard vMix call lines (video)
+   - Callers connect to publicly available app
+   - Screening before queue
+   - Callers see current program while waiting
+   - App maintains two permanent SRT connections (likely via Cloudflare)
+   - Switch input feeds when Josh hits button
+
+2. TELEPHONE PATH:
+   - Asterisk already running on LAN
+   - Connected to Flowroute trunking
+   - Maintain two permanent audio connections
+   - Switch between them via local control
+
+LOCAL CONTROL:
+- StreamDeck connected to Bitfocus Companion
+
+TECHNICAL ARCHITECTURE
+----------------------
+VIDEO SYSTEM:
+- WebRTC for caller ingestion
+- Queue management with screening dashboard
+- SRT output to vMix (2 persistent connections)
+- Cloudflare hosting/tunnel for public access
+- Real-time WebSocket updates
+
+AUDIO SYSTEM:
+- Asterisk queue management
+- SIP softphones for vMix connections
+- Virtual audio routing for mix-minus
+- AMI integration for control
+
+HOST CONTROL:
+- StreamDeck with Bitfocus Companion
+- vMix input switching
+- Queue advancement triggers
+- Status monitoring
+
+IMPLEMENTATION PHASES
+--------------------
+PHASE 1 (CURRENT):
+- Basic web queue for video callers
+- Manual operator dashboard
+- WebRTC to vMix proof-of-concept
+
+PHASE 2:
+- SRT bridge implementation
+- Persistent connection management
+- Program feed for waiting callers
+
+PHASE 3:
+- Asterisk integration
+- Audio path implementation
+- Mix-minus routing
+
+PHASE 4:
+- Companion integration
+- Automated switching
+- Production hardening
+
+USER FLOWS
+----------
+VIDEO CALLER:
+1. Visit public URL
+2. Enter name/topic
+3. Join queue
+4. View program while waiting
+5. Get promoted to live when selected
+6. Disconnected after segment
+
+AUDIO CALLER:
+1. Dial public number
+2. IVR screening
+3. Queue with hold music/program audio
+4. Transfer to live slot when selected
+5. Disconnected after segment
+
+SCREENER/OPERATOR:
+1. Monitor incoming queue
+2. Pre-screen/chat with callers
+3. Approve for live queue
+4. Manage active slots
+
+HOST (JOSH):
+1. See queue status on StreamDeck
+2. Press button to take next caller
+3. Control which slot is live
+4. End calls as needed
+
+DEPLOYMENT REQUIREMENTS
+----------------------
+- Public web server (Cloudflare preferred)
+- SRT capability (FFmpeg/OBS relay)
+- SSL/HTTPS for WebRTC
+- Low-latency connections (<500ms)
+- Asterisk with AMI enabled
+- vMix with SRT input support
+- StreamDeck with Companion
+
+CURRENT IMPLEMENTATION STATUS
+-----------------------------
+A basic version has been built with:
+- Node.js/Express/Socket.io backend
+- WebRTC video/audio capture
+- Queue management system
+- Operator dashboard
+BUT: This is PHASE 1 only. The SRT bridging and Asterisk integration
+are still required per this plan.
+
+CRITICAL GAPS TO ADDRESS
+------------------------
+1. No SRT output implementation yet
+2. No persistent vMix connections
+3. No program feed for waiting callers
+4. No Asterisk integration
+5. No Companion control implementation
+
+FUTURE ENHANCEMENTS
+-------------------
+- Zoom integration as fallback
+- Recording capabilities
+- Multi-host support
+- Analytics and reporting
+- Custom branding per show
+
+REFERENCES
+----------
+- Callaba.io for WebRTC-to-SRT
+- Jitsi Meet for open-source option
+- vMix forums for integration examples
+- Companion docs for StreamDeck control
+
+STATUS
+------
+Existing work is preliminary Phase 1 only.
+THIS DOCUMENT defines the actual requirements.
+All implementation must align with this plan.
+
+END OF CANONICAL PLAN
