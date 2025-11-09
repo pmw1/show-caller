@@ -1,0 +1,44 @@
+name = "liftover-call-queue"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+workers_dev = false
+
+# Custom domain routing
+route = { pattern = "calls.example.com/*", zone_id = "YOUR_ZONE_ID" }
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+SRT_BRIDGE_URL = "srt-bridge.example.com"
+VMIX_SRT_SLOT1 = "srt://vmix.local:9001?streamid=slot1"
+VMIX_SRT_SLOT2 = "srt://vmix.local:9002?streamid=slot2"
+
+# KV namespace for queue state
+[[kv_namespaces]]
+binding = "QUEUE_STATE"
+id = "your-kv-namespace-id"
+
+# Durable Objects for real-time queue management
+[[durable_objects.bindings]]
+name = "QUEUE_MANAGER"
+class_name = "QueueManager"
+script_name = "queue-manager"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["QueueManager"]
+
+# R2 bucket for recordings (optional)
+[[r2_buckets]]
+binding = "RECORDINGS"
+bucket_name = "liftover-recordings"
+
+# Analytics Engine (optional)
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+
+# Secrets (set via wrangler secret put)
+# TURN_SERVER_URL
+# TURN_USERNAME  
+# TURN_PASSWORD
+# OPERATOR_PASSWORD

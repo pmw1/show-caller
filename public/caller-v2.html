@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liftover Call Queue - Join the Show</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .join-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .join-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .join-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #screeningScreen, #queueScreen, #liveScreen {
+            display: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #ffa500;
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status-badge.approved {
+            background: #4CAF50;
+        }
+
+        .status-badge.live {
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .queue-position {
+            font-size: 4em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .queue-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Program Feed Viewer */
+        .program-viewer {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 20px 0;
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        }
+
+        .program-viewer video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .program-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 1;
+        }
+
+        /* Test Section */
+        .test-section {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .test-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .media-test {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #localVideo {
+            width: 300px;
+            height: 200px;
+            background: #000;
+            border-radius: 8px;
+        }
+
+        .audio-visualizer {
+            width: 300px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #222;
+            border-radius: 8px;
+        }
+
+        .audio-bars {
+            display: flex;
+            gap: 3px;
+            height: 60px;
+            align-items: flex-end;
+        }
+
+        .audio-bar {
+            width: 4px;
+            background: #667eea;
+            border-radius: 2px;
+            transition: height 0.1s;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .control-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .leave-btn {
+            padding: 10px 30px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        #liveVideo {
+            width: 100%;
+            max-width: 600px;
+            background: #000;
+            border-radius: 8px;
+            margin: 20px auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Join Form -->
+        <div id="joinScreen">
+            <h1>Join the Show</h1>
+            <form id="joinForm">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" id="name" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="topic">What do you want to talk about?</label>
+                    <textarea id="topic" placeholder="Describe your topic or question..." required></textarea>
+                </div>
+                <button type="submit" class="join-btn">Request to Join</button>
+            </form>
+        </div>
+
+        <!-- Screening Screen -->
+        <div id="screeningScreen">
+            <h1>Screening in Progress</h1>
+            <div class="status-badge">Under Review</div>
+            <p class="queue-text">A producer is reviewing your request. This usually takes less than a minute.</p>
+            
+            <h2>While You Wait - Watch the Show</h2>
+            <div class="program-viewer">
+                <div class="program-label">Live Program</div>
+                <video id="programFeed" controls muted></video>
+            </div>
+
+            <div class="test-section">
+                <h3>Test Your Setup</h3>
+                <p>Make sure your camera and microphone are working:</p>
+                
+                <div class="media-test">
+                    <video id="localVideoScreening" autoplay muted></video>
+                    <div class="audio-visualizer">
+                        <div class="audio-bars" id="audioBarsScreening">
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn active" id="toggleVideoScreening">Camera On</button>
+                    <button class="control-btn active" id="toggleAudioScreening">Mic On</button>
+                </div>
+            </div>
+
+            <button class="leave-btn" onclick="location.reload()">Leave</button>
+        </div>
+
+        <!-- Queue Screen (After Approval) -->
+        <div id="queueScreen">
+            <h1>You're in the Queue!</h1>
+            <div class="status-badge approved">Approved</div>
+            <div class="queue-text">Your position:</div>
+            <div class="queue-position" id="queuePosition">-</div>
+            
+            <h2>Continue Watching the Show</h2>
+            <div class="program-viewer">
+                <div class="program-label">Live Program</div>
+                <video id="programFeedQueue" controls muted></video>
+            </div>
+
+            <div class="test-section">
+                <h3>Your Setup</h3>
+                <div class="media-test">
+                    <video id="localVideoQueue" autoplay muted></video>
+                    <div class="audio-visualizer">
+                        <div class="audio-bars" id="audioBarsQueue">
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn active" id="toggleVideoQueue">Camera On</button>
+                    <button class="control-btn active" id="toggleAudioQueue">Mic On</button>
+                </div>
+            </div>
+
+            <button class="leave-btn" onclick="location.reload()">Leave Queue</button>
+        </div>
+
+        <!-- Live Screen -->
+        <div id="liveScreen">
+            <div class="status-badge live">ON AIR</div>
+            <h1>You're Live!</h1>
+            <p class="queue-text">You're connected to the show. The host can see and hear you.</p>
+            
+            <video id="liveVideo" autoplay muted></video>
+
+            <p class="queue-text" style="margin-top: 20px;">
+                <strong>Slot:</strong> <span id="slotInfo">-</span>
+            </p>
+
+            <button class="leave-btn" onclick="location.reload()">End Call</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        const socket = io();
+        let localStream = null;
+        let peerConnection = null;
+        let audioContext = null;
+        let analyser = null;
+        let callerId = null;
+        let programFeedUrl = null;
+
+        // Screen management
+        function showScreen(screenId) {
+            document.querySelectorAll('.container > div').forEach(screen => {
+                screen.style.display = 'none';
+            });
+            document.getElementById(screenId).style.display = 'block';
+        }
+
+        // Join form submission
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const topic = document.getElementById('topic').value;
+
+            // Join screening queue first (per big-plan.txt)
+            socket.emit('join-screening', { name, topic });
+            showScreen('screeningScreen');
+            
+            // Start media setup
+            await setupMedia('Screening');
+        });
+
+        // Setup media devices
+        async function setupMedia(screen) {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+
+                const video = document.getElementById(`localVideo${screen}`);
+                if (video) {
+                    video.srcObject = localStream;
+                }
+
+                // Setup audio visualization
+                setupAudioVisualization(localStream, screen);
+            } catch (err) {
+                console.error('Media access error:', err);
+                alert('Please allow camera and microphone access to continue');
+            }
+        }
+
+        // Audio visualization
+        function setupAudioVisualization(stream, screen) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function updateVisualization() {
+                requestAnimationFrame(updateVisualization);
+                analyser.getByteFrequencyData(dataArray);
+
+                const bars = document.querySelectorAll(`#audioBars${screen} .audio-bar`);
+                bars.forEach((bar, i) => {
+                    const value = dataArray[i * 16] || 0;
+                    bar.style.height = (value / 255 * 100) + '%';
+                });
+            }
+            updateVisualization();
+        }
+
+        // Setup program feed viewer
+        function setupProgramFeed(videoId, url) {
+            if (!url) return;
+            
+            const video = document.getElementById(videoId);
+            if (!video) return;
+
+            if (url.endsWith('.m3u8')) {
+                // HLS stream
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                        video.play();
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = url;
+                }
+            } else {
+                // Direct video URL
+                video.src = url;
+            }
+        }
+
+        // Socket event handlers
+        socket.on('screening-joined', (data) => {
+            callerId = data.callerId;
+            programFeedUrl = data.programFeedUrl;
+            setupProgramFeed('programFeed', programFeedUrl);
+        });
+
+        socket.on('approved', (data) => {
+            showScreen('queueScreen');
+            document.getElementById('queuePosition').textContent = data.position;
+            setupProgramFeed('programFeedQueue', programFeedUrl);
+            // Transfer video stream
+            if (localStream) {
+                document.getElementById('localVideoQueue').srcObject = localStream;
+                setupAudioVisualization(localStream, 'Queue');
+            }
+        });
+
+        socket.on('queue-update', (data) => {
+            document.getElementById('queuePosition').textContent = data.position;
+        });
+
+        socket.on('go-live', async (data) => {
+            showScreen('liveScreen');
+            document.getElementById('slotInfo').textContent = data.slot;
+            
+            // Move video to live screen
+            const liveVideo = document.getElementById('liveVideo');
+            liveVideo.srcObject = localStream;
+
+            // Setup WebRTC connection for SRT bridge
+            await setupWebRTC(data);
+        });
+
+        socket.on('call-ended', () => {
+            alert('Your call has ended. Thank you for joining!');
+            location.reload();
+        });
+
+        // WebRTC setup for SRT bridge
+        async function setupWebRTC(config) {
+            const configuration = {
+                iceServers: [
+                    ...config.stunServers,
+                    ...config.turnServers
+                ]
+            };
+
+            peerConnection = new RTCPeerConnection(configuration);
+
+            // Add local stream tracks
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            // Create offer
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            socket.emit('webrtc-offer', { offer });
+
+            // Handle answer
+            socket.on('webrtc-answer', async (data) => {
+                await peerConnection.setRemoteDescription(data.answer);
+            });
+        }
+
+        // Media controls
+        ['Screening', 'Queue'].forEach(screen => {
+            const videoBtn = document.getElementById(`toggleVideo${screen}`);
+            const audioBtn = document.getElementById(`toggleAudio${screen}`);
+            
+            if (videoBtn) {
+                videoBtn.addEventListener('click', function() {
+                    if (localStream) {
+                        const videoTrack = localStream.getVideoTracks()[0];
+                        videoTrack.enabled = !videoTrack.enabled;
+                        this.textContent = videoTrack.enabled ? 'Camera On' : 'Camera Off';
+                        this.classList.toggle('active');
+                    }
+                });
+            }
+
+            if (audioBtn) {
+                audioBtn.addEventListener('click', function() {
+                    if (localStream) {
+                        const audioTrack = localStream.getAudioTracks()[0];
+                        audioTrack.enabled = !audioTrack.enabled;
+                        this.textContent = audioTrack.enabled ? 'Mic On' : 'Mic Off';
+                        this.classList.toggle('active');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

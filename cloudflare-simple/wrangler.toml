@@ -1,0 +1,18 @@
+name = "liftover-queue"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+workers_dev = false
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+
+# Custom domain routing for dtnr.io
+[[routes]]
+pattern = "calls.dtnr.io/*"
+zone_name = "dtnr.io"
+
+# Alternative: Use the whole domain
+# [[routes]]
+# pattern = "dtnr.io/*"
+# zone_name = "dtnr.io"

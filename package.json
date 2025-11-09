@@ -14,7 +14,10 @@
     "uuid": "^9.0.0",
     "dotenv": "^16.0.3",
     "cors": "^2.8.5",
-    "helmet": "^7.0.0"
+    "helmet": "^7.0.0",
+    "wrtc": "^0.4.7",
+    "ws": "^8.14.2",
+    "fluent-ffmpeg": "^2.1.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
