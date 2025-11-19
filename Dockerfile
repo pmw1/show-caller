@@ -48,23 +48,42 @@ webrtcICEServers:
 rtspAddress: :8554
 
 paths:
-  # Slot 1 - WebRTC input from browser
+  # Slot 1 - WebRTC input from browser or standby video
   slot1:
     source: publisher
-    # When someone publishes via WebRTC, start SRT output on port 9001
-    runOnReady: ffmpeg -i rtsp://localhost:8554/slot1 -c copy -f mpegts "srt://0.0.0.0:9001?mode=listener"
+    # Standby video loop when no one is publishing
+    runOnInit: ffmpeg -re -stream_loop -1 -i /app/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot1
+    runOnInitRestart: yes
+    # When someone publishes via WebRTC, they take over
     
-  # Slot 2 - WebRTC input from browser
+  # Slot 2 - WebRTC input from browser or standby video  
   slot2:
     source: publisher
-    # When someone publishes via WebRTC, start SRT output on port 9002
-    runOnReady: ffmpeg -i rtsp://localhost:8554/slot2 -c copy -f mpegts "srt://0.0.0.0:9002?mode=listener"
+    # Standby video loop when no one is publishing
+    runOnInit: ffmpeg -re -stream_loop -1 -i /app/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot2
+    runOnInitRestart: yes
+    # When someone publishes via WebRTC, they take over
     
-  # Test pattern when no caller
-  test:
-    runOnInit: ffmpeg -re -f lavfi -i testsrc2=s=1920x1080:r=30 -f lavfi -i sine -c:v libx264 -preset ultrafast -c:a aac -f rtsp rtsp://localhost:8554/test
+  # SRT output streams (always running)
+  srt1:
+    runOnInit: ffmpeg -i rtsp://localhost:8554/slot1 -c copy -f mpegts "srt://0.0.0.0:9001?mode=listener"
+    runOnInitRestart: yes
+    
+  srt2:
+    runOnInit: ffmpeg -i rtsp://localhost:8554/slot2 -c copy -f mpegts "srt://0.0.0.0:9002?mode=listener"
     runOnInitRestart: yes
 EOF
+
+# Copy standby video (or create one if not provided)
+# Option 1: Copy your own video file
+# COPY standby.mp4 /app/standby.mp4
+
+# Option 2: Create a simple standby video with text
+RUN ffmpeg -f lavfi -i "color=c=0x1a1a2e:s=1920x1080:r=30:d=10,drawtext=text='Waiting for Caller':fontcolor=white:fontsize=72:x=(w-text_w)/2:y=(h-text_h)/2" \
+    -f lavfi -i "anullsrc=r=48000:cl=stereo" \
+    -c:v libx264 -preset ultrafast -pix_fmt yuv420p \
+    -c:a aac -b:a 128k -shortest -y \
+    /app/standby.mp4
 
 # Copy any Node.js control scripts (optional)
 COPY package*.json ./
