@@ -51,16 +51,16 @@ paths:
   # Slot 1 - WebRTC input from browser or standby video
   slot1:
     source: publisher
-    # Standby video loop when no one is publishing
-    runOnInit: ffmpeg -re -stream_loop -1 -i /app/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot1
+    # Standby video loop - checks for custom video first, falls back to default
+    runOnInit: sh -c "if [ -f /app/media/standby-slot1.mp4 ]; then ffmpeg -re -stream_loop -1 -i /app/media/standby-slot1.mp4 -c copy -f rtsp rtsp://localhost:8554/slot1; elif [ -f /app/media/standby.mp4 ]; then ffmpeg -re -stream_loop -1 -i /app/media/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot1; else ffmpeg -re -stream_loop -1 -i /app/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot1; fi"
     runOnInitRestart: yes
     # When someone publishes via WebRTC, they take over
     
   # Slot 2 - WebRTC input from browser or standby video  
   slot2:
     source: publisher
-    # Standby video loop when no one is publishing
-    runOnInit: ffmpeg -re -stream_loop -1 -i /app/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot2
+    # Standby video loop - checks for custom video first, falls back to default
+    runOnInit: sh -c "if [ -f /app/media/standby-slot2.mp4 ]; then ffmpeg -re -stream_loop -1 -i /app/media/standby-slot2.mp4 -c copy -f rtsp rtsp://localhost:8554/slot2; elif [ -f /app/media/standby.mp4 ]; then ffmpeg -re -stream_loop -1 -i /app/media/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot2; else ffmpeg -re -stream_loop -1 -i /app/standby.mp4 -c copy -f rtsp rtsp://localhost:8554/slot2; fi"
     runOnInitRestart: yes
     # When someone publishes via WebRTC, they take over
     

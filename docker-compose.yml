@@ -6,17 +6,22 @@ services:
     container_name: liftover-srt
     restart: unless-stopped
     ports:
-      # API port
-      - "3001:3001"
+      # WebRTC signaling
+      - "8889:8889"
+      # WebRTC media
+      - "8189:8189/udp"
       # SRT ports - UDP is what matters for SRT
       - "9001:9001/udp"
       - "9002:9002/udp"
-      # Also expose TCP just in case
-      - "9001:9001/tcp"
-      - "9002:9002/tcp"
+      # MediaMTX API
+      - "9997:9997"
+    volumes:
+      # Persistent media directory for your videos
+      - ./media:/app/media
+      # Optional: persistent config
+      - ./config:/app/config
     environment:
       - NODE_ENV=production
-      - SRT_BRIDGE_PORT=3001
     networks:
       - liftover
     healthcheck:
