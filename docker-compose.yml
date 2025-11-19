@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  srt-bridge:
+    build: .
+    container_name: liftover-srt
+    restart: unless-stopped
+    ports:
+      # API port
+      - "3001:3001"
+      # SRT ports - UDP is what matters for SRT
+      - "9001:9001/udp"
+      - "9002:9002/udp"
+      # Also expose TCP just in case
+      - "9001:9001/tcp"
+      - "9002:9002/tcp"
+    environment:
+      - NODE_ENV=production
+      - SRT_BRIDGE_PORT=3001
+    networks:
+      - liftover
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  liftover:
+    driver: bridge
+
+# To run:
+# docker-compose up -d
+#
+# To view logs:
+# docker-compose logs -f
+#
+# To stop:
+# docker-compose down
+#
+# vMix connects to:
+# srt://DOCKER_HOST_IP:9001?mode=caller
+# srt://DOCKER_HOST_IP:9002?mode=caller

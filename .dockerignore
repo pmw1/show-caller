@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+*.md
+.env
+cloudflare/
+cloudflare-simple/
+public/
+*.sh
+!srt-bridge-simple.js
+.DS_Store
+package-lock.json
