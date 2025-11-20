@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  srt-bridge:
+  mediamtx:
     build: .
     container_name: liftover-srt
     restart: unless-stopped
@@ -10,13 +10,13 @@ services:
       - "8889:8889"
       # WebRTC media
       - "8189:8189/udp"
-      # SRT ports - UDP is what matters for SRT
+      # SRT outputs for vMix
       - "9001:9001/udp"
       - "9002:9002/udp"
       # MediaMTX API
       - "9997:9997"
     volumes:
-      # Persistent media directory for your videos
+      # Persistent media directory for standby videos
       - ./media:/app/media
       # Optional: persistent config
       - ./config:/app/config
@@ -24,18 +24,12 @@ services:
       - NODE_ENV=production
     networks:
       - liftover
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 networks:
   liftover:
     driver: bridge
 
-# To run:
+# Usage:
 # docker-compose up -d
 #
 # To view logs:
@@ -45,5 +39,5 @@ networks:
 # docker-compose down
 #
 # vMix connects to:
-# srt://DOCKER_HOST_IP:9001?mode=caller
-# srt://DOCKER_HOST_IP:9002?mode=caller
+# srt://HOST_IP:9001 - Slot 1
+# srt://HOST_IP:9002 - Slot 2
